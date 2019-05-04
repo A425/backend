@@ -2,48 +2,34 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"github.com/micro/go-log"
 
 	authCenterClient "backend/authCenter/proto/auth"
 	"backend/userApi/client"
-	api "github.com/micro/go-api/proto"
 	"github.com/micro/go-micro/errors"
 )
 
 type User struct{}
 
-func extractValue(pair *api.Pair) string {
-	if pair == nil {
-		return ""
-	}
-	if len(pair.Values) == 0 {
-		return ""
-	}
-	return pair.Values[0]
+func ctxFromGinContext(c *gin.Context) context.Context {
+	return context.Background()
 }
 
-func (e *User) VerifyWechatCode(ctx context.Context, req *api.Request, rsp *api.Response) error {
-	log.Log("Received User.VerifyWechatCode request, path:" + req.GetPath())
+func (e *User) VerifyWechatCode(c *gin.Context) {
+	log.Logf("Received User.VerifyWechatCode request, d")
 
-	// extract the client from the context
-	c, ok := client.AuthClientFromContext(ctx)
-	if !ok {
-		return errors.InternalServerError("go.micro.api.userApi.user.VerifyWechatCode", "auth client not found")
-	}
+	cl := client.AuthClient()
 
+	ctx := ctxFromGinContext(c)
 	// make request
-	response, err := c.VerifyWechatCode(ctx, &authCenterClient.VerifyWechatCodeRequest{
-		Code: extractValue(req.Post["code"]),
+	response, err := cl.VerifyWechatCode(ctx, &authCenterClient.VerifyWechatCodeRequest{
+		Code: c.Param("code"),
 	})
 	if err != nil {
-		return errors.InternalServerError("go.micro.api.userApi.user.VerifyWechatCode", err.Error())
+		c.JSON(500, errors.InternalServerError("go.micro.api.userApi.user.VerifyWechatCode", err.Error()))
+		return
 	}
 
-	b, _ := json.Marshal(response)
-
-	rsp.StatusCode = 200
-	rsp.Body = string(b)
-
-	return nil
+	c.JSON(200, response)
 }

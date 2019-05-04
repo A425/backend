@@ -1,31 +1,32 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/micro/go-log"
 
 	"backend/userApi/client"
 	"backend/userApi/handler"
-	"github.com/micro/go-micro"
-
-	user "backend/userApi/proto/user"
+	"github.com/micro/go-web"
 )
 
 func main() {
 	// New Service
-	service := micro.NewService(
-		micro.Name("go.micro.api.userApi"),
-		micro.Version("0.0.1"),
+	service := web.NewService(
+		web.Name("go.micro.api.userApi"),
+		web.Version("0.0.1"),
 	)
 
 	// Initialise service
-	service.Init(
-		// create wrap for the AuthClient srv client
-		micro.WrapHandler(client.AuthClientWrapper(service)),
-	)
+	service.Init()
+
+	client.InitAuthClient()
 
 	// Register Handler
-	svr := service.Server()
-	user.RegisterUserHandler(svr, new(handler.User))
+	router := gin.Default()
+	h := new(handler.User)
+	router.GET("/userApi/user/:code", h.VerifyWechatCode)
+
+	service.Handle("/", router)
 
 	// Run service
 	if err := service.Run(); err != nil {
