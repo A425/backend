@@ -3,28 +3,29 @@ package main
 import (
 	"github.com/micro/go-log"
 
-	"github.com/micro/go-micro"
-	"backend/userApi/handler"
 	"backend/userApi/client"
+	"backend/userApi/handler"
+	"github.com/micro/go-micro"
 
-	example "backend/userApi/proto/example"
+	user "backend/userApi/proto/user"
 )
 
 func main() {
 	// New Service
 	service := micro.NewService(
 		micro.Name("go.micro.api.userApi"),
-		micro.Version("latest"),
+		micro.Version("0.0.1"),
 	)
 
 	// Initialise service
 	service.Init(
-		// create wrap for the Example srv client
-		micro.WrapHandler(client.ExampleWrapper(service)),
+		// create wrap for the AuthClient srv client
+		micro.WrapHandler(client.AuthClientWrapper(service)),
 	)
 
 	// Register Handler
-	example.RegisterExampleHandler(service.Server(), new(handler.Example))
+	svr := service.Server()
+	user.RegisterUserHandler(svr, new(handler.User))
 
 	// Run service
 	if err := service.Run(); err != nil {

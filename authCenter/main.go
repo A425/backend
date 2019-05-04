@@ -2,31 +2,24 @@ package main
 
 import (
 	"backend/authCenter/handler"
-	"backend/authCenter/subscriber"
+	authProto "backend/authCenter/proto/auth"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro"
-
-	example "backend/authCenter/proto/example"
 )
 
 func main() {
 	// New Service
 	service := micro.NewService(
 		micro.Name("go.micro.srv.authCenter"),
-		micro.Version("latest"),
+		micro.Version("0.0.1"),
 	)
 
 	// Initialise service
 	service.Init()
 
 	// Register Handler
-	example.RegisterExampleHandler(service.Server(), new(handler.Example))
-
-	// Register Struct as Subscriber
-	micro.RegisterSubscriber("go.micro.srv.authCenter", service.Server(), new(subscriber.Example))
-
-	// Register Function as Subscriber
-	micro.RegisterSubscriber("go.micro.srv.authCenter", service.Server(), subscriber.Handler)
+	svr := service.Server()
+	authProto.RegisterAuthCenterHandler(svr, new(handler.WechatAuth))
 
 	// Run service
 	if err := service.Run(); err != nil {

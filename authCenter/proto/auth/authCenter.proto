@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package go.micro.srv.authCenter;
+
+service AuthCenter {
+	rpc VerifyWechatCode(VerifyWechatCodeRequest) returns (VerifyWechatCodeResponse) {}
+}
+
+message VerifyWechatCodeRequest {
+	string code = 1;
+}
+
+message VerifyWechatCodeResponse {
+	string msg = 1;
+}

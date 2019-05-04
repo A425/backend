@@ -4,6 +4,6 @@ package go.micro.api.userApi;
 
 import "github.com/micro/go-api/proto/api.proto";
 
-service Example {
-	rpc Call(go.api.Request) returns (go.api.Response) {}
+service User {
+	rpc VerifyWechatCode(go.api.Request) returns (go.api.Response) {}
 }
