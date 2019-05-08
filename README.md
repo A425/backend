@@ -21,8 +21,8 @@ consul和micro的api gateway 是现成工具无需研发，直接使用。
 - 配置线上域名解析
 - 配置负载均衡器 指到API gateway
 - 所有服务配置自动扩容
-- consul用于服务发现，min 2 max 5
+- consul用于服务发现，min 2 max 5（机器数量）
 - api gateway 代理前端请求，min 2 max 5
 - 检测状态用的web服务，节约成本的话可以考虑和consul一起部署。
-- 每个RPC服务，min 2 max 5，假如两个RPC就要 min 2*2，max 5*2
+- 每个RPC服务，min 2 max 5，假如两个RPC就要 min 2 * 2，max 5 * 2
 
