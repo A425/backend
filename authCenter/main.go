@@ -19,7 +19,7 @@ func main() {
 
 	// Register Handler
 	svr := service.Server()
-	authProto.RegisterAuthCenterHandler(svr, new(handler.WechatAuth))
+	authProto.RegisterAuthCenterHandler(svr, new(handler.AuthCenter))
 
 	// Run service
 	if err := service.Run(); err != nil {

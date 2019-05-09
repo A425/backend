@@ -35,6 +35,7 @@ var _ server.Option
 
 type AuthCenterService interface {
 	VerifyWechatCode(ctx context.Context, in *VerifyWechatCodeRequest, opts ...client.CallOption) (*VerifyWechatCodeResponse, error)
+	GetJWTToken(ctx context.Context, in *GetJWTTokenRequest, opts ...client.CallOption) (*GetJWTTokenResponse, error)
 }
 
 type authCenterService struct {
@@ -65,15 +66,27 @@ func (c *authCenterService) VerifyWechatCode(ctx context.Context, in *VerifyWech
 	return out, nil
 }
 
+func (c *authCenterService) GetJWTToken(ctx context.Context, in *GetJWTTokenRequest, opts ...client.CallOption) (*GetJWTTokenResponse, error) {
+	req := c.c.NewRequest(c.name, "AuthCenter.GetJWTToken", in)
+	out := new(GetJWTTokenResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for AuthCenter service
 
 type AuthCenterHandler interface {
 	VerifyWechatCode(context.Context, *VerifyWechatCodeRequest, *VerifyWechatCodeResponse) error
+	GetJWTToken(context.Context, *GetJWTTokenRequest, *GetJWTTokenResponse) error
 }
 
 func RegisterAuthCenterHandler(s server.Server, hdlr AuthCenterHandler, opts ...server.HandlerOption) error {
 	type authCenter interface {
 		VerifyWechatCode(ctx context.Context, in *VerifyWechatCodeRequest, out *VerifyWechatCodeResponse) error
+		GetJWTToken(ctx context.Context, in *GetJWTTokenRequest, out *GetJWTTokenResponse) error
 	}
 	type AuthCenter struct {
 		authCenter
@@ -88,4 +101,8 @@ type authCenterHandler struct {
 
 func (h *authCenterHandler) VerifyWechatCode(ctx context.Context, in *VerifyWechatCodeRequest, out *VerifyWechatCodeResponse) error {
 	return h.AuthCenterHandler.VerifyWechatCode(ctx, in, out)
+}
+
+func (h *authCenterHandler) GetJWTToken(ctx context.Context, in *GetJWTTokenRequest, out *GetJWTTokenResponse) error {
+	return h.AuthCenterHandler.GetJWTToken(ctx, in, out)
 }

@@ -12,7 +12,7 @@ import (
 func main() {
 	// New Service
 	service := web.NewService(
-		web.Name("go.micro.api.userApi"),
+		web.Name("go.micro.api.userapi"),
 		web.Version("0.0.1"),
 	)
 
@@ -24,7 +24,10 @@ func main() {
 	// Register Handler
 	router := gin.Default()
 	h := new(handler.User)
-	router.GET("/userApi/user/:code", h.VerifyWechatCode)
+	router.Use(gin.Recovery())
+
+	apiGroup := router.Group("/userapi")
+	apiGroup.GET("/v1/login/wechat/:code", h.LoginOrRegisterViaWechat)
 
 	service.Handle("/", router)
 

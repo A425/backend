@@ -3,17 +3,17 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/valyala/fasthttp"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/micro/go-log"
-	"github.com/valyala/fasthttp"
 
-	wechatAuth "backend/authCenter/proto/auth"
+	auth "backend/authCenter/proto/auth"
 )
 
 // WechatAuth ...
-type WechatAuth struct{}
+type AuthCenter struct{}
 
 const (
 	WechatValidationEndpoint = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"
@@ -28,9 +28,8 @@ type Code2SessionResp struct {
 }
 
 // VerifyWechatCode 校验登录凭证
-func (a *WechatAuth) VerifyWechatCode(ctx context.Context, req *wechatAuth.VerifyWechatCodeRequest, rsp *wechatAuth.VerifyWechatCodeResponse) error {
-	log.Log("Received WechatAuth.VerifyWechatCode request:" + req.GetCode())
-	rsp.Msg = "Hello " + req.Code
+func (a *AuthCenter) VerifyWechatCode(ctx context.Context, req *auth.VerifyWechatCodeRequest, rsp *auth.VerifyWechatCodeResponse) error {
+	log.Log("Received AuthCenter.VerifyWechatCode request:" + req.GetCode())
 	url := fmt.Sprintf(WechatValidationEndpoint, "appid", "secret", req.Code)
 
 	// using github.com/json-iterator/go to unmarshal
@@ -41,7 +40,11 @@ func (a *WechatAuth) VerifyWechatCode(ctx context.Context, req *wechatAuth.Verif
 
 	resp := &Code2SessionResp{}
 
-	fmt.Println(resp)
+	rsp.OpenID = resp.OpenID
+	rsp.SessionKey = resp.SessionKey
+	rsp.UnionID = resp.OpenID
+
+	fmt.Println(rsp)
 
 	/*
 		VerifyWechatCode 里边做的事情: (最好改名)
@@ -50,8 +53,7 @@ func (a *WechatAuth) VerifyWechatCode(ctx context.Context, req *wechatAuth.Verif
 				update session token of this userID
 			3.if userID is empty then
 				register 当前 openid 和 unionid 以及这个session key到数据库，并返回userID
-			4.为当前用户生成一个uuid随机数存到dal中
-			5.将 userid, 随机数和一些时间拼成 jwt的入参并生成jwt
+			4.将 userid和一些时间拼成 jwt的入参并生成jwt
 	*/
 
 	/*
@@ -59,19 +61,27 @@ func (a *WechatAuth) VerifyWechatCode(ctx context.Context, req *wechatAuth.Verif
 			1.
 	*/
 
-	now := time.Now().Unix()
+	log.Logf("st:%d, resp:%s", st, r)
+	return nil
+}
+
+func (a *AuthCenter) GetJWTToken(ctx context.Context, req *auth.GetJWTTokenRequest, rsp *auth.GetJWTTokenResponse) error {
+	log.Log("Received AuthCenter.GetJWTToken request:" + req.GetUserID())
+
+	// TODO Check userID
+
+	now := time.Now()
+	expireAt := now.Add(time.Hour * 2)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userid":      "userid",
-		"uid":         "uuid",
-		"issueat":     now,        // 签发时间
-		"deprecateat": now + 5*60, // 过期时间
+		"userid":   req.GetUserID(),
+		"issueat":  now.Unix(),      // 签发时间
+		"expireat": expireAt.Unix(), // 过期时间
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString("hmacSampleSecret")
+	tokenString, err := token.SignedString([]byte("hmacSampleSecret"))
 
 	fmt.Println(tokenString, err)
 
-	log.Logf("st:%d, resp:%s", st, r)
-	return nil
+	return err
 }

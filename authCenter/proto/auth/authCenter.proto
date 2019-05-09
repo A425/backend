@@ -4,6 +4,7 @@ package go.micro.srv.authCenter;
 
 service AuthCenter {
 	rpc VerifyWechatCode(VerifyWechatCodeRequest) returns (VerifyWechatCodeResponse) {}
+	rpc GetJWTToken(GetJWTTokenRequest) returns (GetJWTTokenResponse) {}
 }
 
 message VerifyWechatCodeRequest {
@@ -11,5 +12,15 @@ message VerifyWechatCodeRequest {
 }
 
 message VerifyWechatCodeResponse {
-	string msg = 1;
+	string openID = 1;
+	string sessionKey = 2;
+	string unionID = 3;
+}
+
+message GetJWTTokenRequest {
+	string userID = 1;
+}
+
+message GetJWTTokenResponse {
+	string token = 1;
 }

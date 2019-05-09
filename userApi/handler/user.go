@@ -16,8 +16,8 @@ func ctxFromGinContext(c *gin.Context) context.Context {
 	return context.Background()
 }
 
-func (e *User) VerifyWechatCode(c *gin.Context) {
-	log.Logf("Received User.VerifyWechatCode request, d")
+func (e *User) LoginOrRegisterViaWechat(c *gin.Context) {
+	log.Logf("Received User.LoginOrRegisterViaWechat request, d")
 
 	cl := client.AuthClient()
 
@@ -30,6 +30,12 @@ func (e *User) VerifyWechatCode(c *gin.Context) {
 		c.JSON(500, errors.InternalServerError("go.micro.api.userApi.user.VerifyWechatCode", err.Error()))
 		return
 	}
+
+	// TODO Get or Create user in DB
+
+	cl.GetJWTToken(ctx, &authCenterClient.GetJWTTokenRequest{
+		// UserID: respon
+	})
 
 	c.JSON(200, response)
 }
