@@ -3,6 +3,7 @@ package handler
 import (
 	apicommon "backend/common/apis"
 	userapicommon "backend/userApi/common"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,38 +31,101 @@ type WechatIdentifyResp struct {
 
 // LoginOrRegisterViaWechat ...
 func (e *User) LoginOrRegisterViaWechat(c *gin.Context) {
-	log.Logf("Received User.LoginOrRegisterViaWechat request, d")
+	fname := "LoginOrRegisterViaWechat"
 
-	cl := client.AuthClient()
+	log.Logf("Received User.%s request", fname)
 
 	ctx, err := apicommon.CreateCtxFromGinContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, errors.BadRequest(userapicommon.ServiceID+"LoginOrRegisterViaWechat", err.Error()))
+		c.JSON(http.StatusBadRequest, errors.BadRequest(userapicommon.ServiceID+fname, err.Error()))
 		return
 	}
 
 	reqBody := &WechatIdentifyReq{}
 	err = c.BindJSON(reqBody)
 	if err != nil {
-		log.Logf("LoginOrRegisterViaWechat: %+v ,err:%v \n", reqBody, err)
+		log.Logf(fname+": %+v ,err:%v \n", reqBody, err)
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
+	cl := client.AuthClient()
 	// make request
 	response, err := cl.VerifyWechatCode(ctx, &authCenterClient.VerifyWechatCodeRequest{
 		Code: reqBody.Code,
 	})
 	if err != nil {
-		c.JSON(500, errors.InternalServerError(userapicommon.ServiceID+"LoginOrRegisterViaWechat", err.Error()))
+		apicommon.SendError(c, userapicommon.ServiceID+fname, err)
 		return
 	}
 
+	fmt.Println(response.UnionID)
+
 	// TODO Get or Create user in DB
 
-	cl.GenerateTokens(ctx, &authCenterClient.GetTokensRequest{
+	tokenResp, err := cl.GenerateTokens(ctx, &authCenterClient.GetTokensRequest{
 		UserID: "user id from db",
 	})
 
-	c.JSON(200, response)
+	if err != nil {
+		apicommon.SendError(c, userapicommon.ServiceID+fname, err)
+		return
+	}
+
+	rsp := WechatIdentifyResp{
+		AccessToken:  tokenResp.AccessToken,
+		RefreshToken: tokenResp.RefreshToken,
+	}
+
+	c.JSON(http.StatusOK, rsp)
+}
+
+// RefreshAccessTokenReq 刷新app的access token
+type RefreshAccessTokenReq struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// RefreshAccessTokenResp 返回wechat resp
+type RefreshAccessTokenResp struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// RefreshAccessToken ...
+func (e *User) RefreshAccessToken(c *gin.Context) {
+	fname := "RefreshAccessToken"
+
+	log.Logf("Received User.%s request", fname)
+
+	ctx, err := apicommon.CreateCtxFromGinContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errors.BadRequest(userapicommon.ServiceID+fname, err.Error()))
+		return
+	}
+
+	reqBody := &RefreshAccessTokenReq{}
+	err = c.BindJSON(reqBody)
+	if err != nil {
+		log.Logf(fname+": %+v ,err:%v \n", reqBody, err)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	cl := client.AuthClient()
+
+	tokenResp, err := cl.RefreshJWTToken(ctx, &authCenterClient.RefreshJWTRequest{
+		RefreshToken: reqBody.RefreshToken,
+	})
+
+	if err != nil {
+		apicommon.SendError(c, userapicommon.ServiceID+fname, err)
+		return
+	}
+
+	rsp := WechatIdentifyResp{
+		AccessToken:  tokenResp.AccessToken,
+		RefreshToken: tokenResp.RefreshToken,
+	}
+
+	c.JSON(http.StatusOK, rsp)
 }
