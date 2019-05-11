@@ -165,6 +165,17 @@
   version = "v0.8.3"
 
 [[projects]]
+  digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx",
+  ]
+  pruneopts = "UT"
+  revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:f5a2051c55d05548d2d4fd23d244027b59fbd943217df8aa3b5e170ac2fd6e1b"
   name = "github.com/json-iterator/go"
   packages = ["."]
@@ -509,7 +520,9 @@
   input-imports = [
     "github.com/dgrijalva/jwt-go",
     "github.com/gin-gonic/gin",
+    "github.com/go-log/log",
     "github.com/golang/protobuf/proto",
+    "github.com/jmoiron/sqlx",
     "github.com/micro/go-api/proto",
     "github.com/micro/go-log",
     "github.com/micro/go-micro",
