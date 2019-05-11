@@ -1,19 +1,24 @@
 package main
 
 import (
+	"time"
+
+	apimiddlewares "backend/common/middlewares/apiMiddlewares"
+	"backend/userApi/client"
+	userapicommon "backend/userApi/common"
+	"backend/userApi/handler"
+
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-log"
-
-	"backend/userApi/client"
-	"backend/userApi/handler"
 	"github.com/micro/go-web"
+	"golang.org/x/time/rate"
 )
 
 func main() {
 	// New Service
 	service := web.NewService(
-		web.Name("go.micro.api.userapi"),
-		web.Version("0.0.1"),
+		web.Name(userapicommon.ServiceID),
+		web.Version(userapicommon.ServiceVersion),
 	)
 
 	// Initialise service
@@ -26,8 +31,23 @@ func main() {
 	h := new(handler.User)
 	router.Use(gin.Recovery())
 
-	apiGroup := router.Group("/userapi")
-	apiGroup.GET("/v1/login/wechat/:code", h.LoginOrRegisterViaWechat)
+	apiGroupV1 := router.Group("/userapi/v1")
+
+	{
+		identifyGroup := apiGroupV1.Group("/identify")
+		identifyRateLimiter := apimiddlewares.NewRateLimiter(func(c *gin.Context) string {
+			return c.ClientIP() // limit rate by client ip
+		}, func(c *gin.Context) (*rate.Limiter, time.Duration) {
+			return rate.NewLimiter(rate.Every(time.Second), 10), time.Hour // limit 10 qps/clientIp, and the limiter liveness time duration is 1 hour
+		}, func(c *gin.Context) {
+			c.AbortWithStatus(429) // handle exceed rate limit request
+		})
+
+		identifyGroup.Use(identifyRateLimiter)
+
+		identifyGroup.POST("/wechat", h.LoginOrRegisterViaWechat)
+		identifyGroup.POST("/refresh_token")
+	}
 
 	service.Handle("/", router)
 

@@ -1,33 +1,20 @@
-package apiMiddlewares
+package apimiddlewares
 
 import (
-	"fmt"
+	"backend/common"
+	"net/http"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-log"
-	"net/http"
-	"strings"
-	"time"
-)
-
-const (
-	authHeaderKey   = "Authorization"
-	authTokenPrefix = "Bearer"
 )
 
 // JWTValidation check JWT token
 func JWTValidation() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader(authHeaderKey)
-		token = strings.Trim(token, authTokenPrefix)
-		token = strings.TrimSpace(token)
 
-		if token == "" {
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		}
-
-		t, err := jwt.Parse(token, keyFunc)
+		t, err := common.GetJWTFromGinCtx(c)
 		if err != nil {
 			log.Log("invalid token")
 			c.AbortWithStatus(http.StatusForbidden)
@@ -66,12 +53,4 @@ func JWTValidation() gin.HandlerFunc {
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
-}
-
-func keyFunc(token *jwt.Token) (interface{}, error) {
-	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-	}
-
-	return []byte("hmacSampleSecret"), nil
 }

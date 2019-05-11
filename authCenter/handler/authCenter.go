@@ -3,13 +3,15 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/valyala/fasthttp"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/micro/go-log"
-
+	authcommon "backend/authCenter/common"
 	auth "backend/authCenter/proto/auth"
+	"backend/common"
+
+	"github.com/micro/go-log"
+	"github.com/micro/go-micro/errors"
+	uuid "github.com/satori/go.uuid"
+	"github.com/valyala/fasthttp"
 )
 
 // WechatAuth ...
@@ -35,7 +37,7 @@ func (a *AuthCenter) VerifyWechatCode(ctx context.Context, req *auth.VerifyWecha
 	// using github.com/json-iterator/go to unmarshal
 	st, r, err := fasthttp.Get(nil, url)
 	if err != nil {
-		return err
+		return errors.InternalServerError(authcommon.ServiceID+"VerifyWechatCode", err.Error())
 	}
 
 	resp := &Code2SessionResp{}
@@ -56,32 +58,63 @@ func (a *AuthCenter) VerifyWechatCode(ctx context.Context, req *auth.VerifyWecha
 			4.将 userid和一些时间拼成 jwt的入参并生成jwt
 	*/
 
-	/*
-		CheckSession 要做的: 当jwt过期或者验证失败时，
-			1.
-	*/
-
 	log.Logf("st:%d, resp:%s", st, r)
 	return nil
 }
 
-func (a *AuthCenter) GetJWTToken(ctx context.Context, req *auth.GetJWTTokenRequest, rsp *auth.GetJWTTokenResponse) error {
+// GenerateTokens ...
+func (a *AuthCenter) GenerateTokens(ctx context.Context, req *auth.GetTokensRequest, rsp *auth.GetTokensResponse) error {
 	log.Log("Received AuthCenter.GetJWTToken request:" + req.GetUserID())
 
-	// TODO Check userID
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := common.GenerateJWT(req.GetUserID())
+	log.Log("tokenString:" + tokenString)
+	if err != nil {
+		return errors.InternalServerError(authcommon.ServiceID+"GenerateTokens", err.Error())
+	}
 
-	now := time.Now()
-	expireAt := now.Add(time.Hour * 2)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userid":   req.GetUserID(),
-		"issueat":  now.Unix(),      // 签发时间
-		"expireat": expireAt.Unix(), // 过期时间
-	})
+	refreshToken := uuid.NewV4().String()
+
+	// store refresh token to db
+
+	rsp.AccessToken = tokenString
+	rsp.RefreshToken = refreshToken
+
+	return nil
+}
+
+// RefreshJWTToken ...
+func (a *AuthCenter) RefreshJWTToken(ctx context.Context, req *auth.RefreshJWTRequest, rsp *auth.RefreshJWTResponse) error {
+	log.Log("Received AuthCenter.RefreshJWTToken request:" + req.GetRefreshToken())
+
+	userIDRaw := ctx.Value(common.UserIDCtxKey)
+	userID, ok := userIDRaw.(string)
+	if !ok {
+		return errors.BadRequest(authcommon.ServiceID+"RefreshJWTToken", "invalid userid")
+	}
+
+	fmt.Println(userID)
+
+	/*
+		Get user from db
+		Compare token between db data and input data
+
+		if anything goes wrong then return with 403
+	*/
 
 	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString([]byte("hmacSampleSecret"))
+	tokenString, err := common.GenerateJWT(userID)
+	log.Log("tokenString:" + tokenString)
+	if err != nil {
+		return errors.InternalServerError(authcommon.ServiceID+"RefreshJWTToken", err.Error())
+	}
 
-	fmt.Println(tokenString, err)
+	refreshToken := uuid.NewV4().String()
 
-	return err
+	// store refresh token to db
+
+	rsp.AccessToken = tokenString
+	rsp.RefreshToken = refreshToken
+
+	return nil
 }

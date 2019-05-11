@@ -1,8 +1,10 @@
 package main
 
 import (
+	authcommon "backend/authCenter/common"
 	"backend/authCenter/handler"
 	authProto "backend/authCenter/proto/auth"
+
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro"
 )
@@ -10,8 +12,8 @@ import (
 func main() {
 	// New Service
 	service := micro.NewService(
-		micro.Name("go.micro.srv.authCenter"),
-		micro.Version("0.0.1"),
+		micro.Name(authcommon.ServiceID),
+		micro.Version(authcommon.ServiceVersion),
 	)
 
 	// Initialise service
