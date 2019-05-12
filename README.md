@@ -17,7 +17,7 @@ consul和micro的api gateway 是现成工具无需研发，直接使用。
 以及后续可能要用到的日志收集或监控打点等
 
 ## 部署
-###生产环境
+### 生产环境
 
 草稿：最好的情况
 - 配置线上域名解析
@@ -29,7 +29,7 @@ consul和micro的api gateway 是现成工具无需研发，直接使用。
 - 检测状态用的web服务，节约成本的话可以考虑和consul一起部署。
 - 每组RPC微服务，min 2 max 5，假如两组微服务就要 min 2 * 2，max 5 * 2
 
-###测试环境
+### 测试环境
 - 关系型数据库 1个
 - consul，api gateway，Web monitor服务部署一起，min max 1。
 - RPC 服务
