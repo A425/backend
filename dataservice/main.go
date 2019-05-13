@@ -1,12 +1,10 @@
 package main
 
 import (
-	"backend/dataservice/handler"
-
+	"backend/dataservice/common"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro"
-
-	example "backend/dataservice/proto/example"
+	"time"
 )
 
 func main() {
@@ -14,13 +12,14 @@ func main() {
 	service := micro.NewService(
 		micro.Name(dalcommon.ServiceID),
 		micro.Version(dalcommon.ServiceVersion),
+		micro.RegisterInterval(time.Second*10),
+		micro.RegisterTTL(time.Second*20),
 	)
 
 	// Initialise service
 	service.Init()
 
 	// Register Handler
-	example.RegisterExampleHandler(service.Server(), new(handler.Example))
 
 	// Run service
 	if err := service.Run(); err != nil {

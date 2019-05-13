@@ -3,6 +3,7 @@ package handler
 import (
 	apicommon "backend/common/apis"
 	userapicommon "backend/userApi/common"
+	"context"
 	"fmt"
 	"net/http"
 
@@ -35,14 +36,8 @@ func (e *User) LoginOrRegisterViaWechat(c *gin.Context) {
 
 	log.Logf("Received User.%s request", fname)
 
-	ctx, err := apicommon.CreateCtxFromGinContext(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, errors.BadRequest(userapicommon.ServiceID+fname, err.Error()))
-		return
-	}
-
 	reqBody := &WechatIdentifyReq{}
-	err = c.BindJSON(reqBody)
+	err := c.BindJSON(reqBody)
 	if err != nil {
 		log.Logf(fname+": %+v ,err:%v \n", reqBody, err)
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -50,6 +45,7 @@ func (e *User) LoginOrRegisterViaWechat(c *gin.Context) {
 	}
 
 	cl := client.AuthClient()
+	ctx := context.Background()
 	// make request
 	response, err := cl.VerifyWechatCode(ctx, &authCenterClient.VerifyWechatCodeRequest{
 		Code: reqBody.Code,

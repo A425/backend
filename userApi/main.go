@@ -20,6 +20,8 @@ func main() {
 	service := web.NewService(
 		web.Name(userapicommon.ServiceID),
 		web.Version(userapicommon.ServiceVersion),
+		web.RegisterInterval(time.Second*10),
+		web.RegisterTTL(time.Second*20),
 	)
 
 	// Initialise service
