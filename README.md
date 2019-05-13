@@ -27,9 +27,10 @@ consul和micro的api gateway 是现成工具无需研发，直接使用。
 - consul用于服务发现和配置管理，min 2 max 5（机器数量）
 - api gateway 代理前端请求，min 2 max 5
 - 检测状态用的web服务，节约成本的话可以考虑和consul一起部署。
-- 每组RPC微服务，min 2 max 5，假如两组微服务就要 min 2 * 2，max 5 * 2
+- 每组微服务，min 2 max 5，假如两组微服务就要 min 2 * 2，max 5 * 2
 
 ### 测试环境
 - 关系型数据库 1个
+- 配置负载均衡器 指到api gateway
 - consul，api gateway，Web monitor服务部署一起，min max 2
-- RPC 服务 2个
+- 微服务 每组服务 包含2台机器
