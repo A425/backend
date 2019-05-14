@@ -17,21 +17,26 @@ consul和micro的api gateway 是现成工具无需研发，直接使用。
 以及后续可能要用到的日志收集或监控打点等
 
 ## 部署
+
+### CI/CD
+
 ### 生产环境
 
 草稿：最好的情况
 - 配置线上域名解析
 - 配置负载均衡器 指到API gateway
 - 所有服务配置自动扩容
-- MySQL数据库 1个
+- MySQL数据库 1组（主备一共2台）
 - consul用于服务发现和配置管理，min 2 max 5（机器数量）
 - api gateway 代理前端请求，min 2 max 5
-- 检测状态用的web服务，节约成本的话可以考虑和consul一起部署。
 - 每组微服务，min 2 max 5，假如两组微服务就要 min 2 * 2，max 5 * 2
 
 ### 测试环境
-- 小程序跳过域名验证，直接配置负载均衡器IP
 - 手动在服务器上配置MySQL 1台
 - 配置负载均衡器 指到api gateway
-- consul，api gateway，Web monitor服务部署一起，min max 2
-- 微服务 每组服务 包含2台机器
+- consul，api gateway服务部署一起，min max 2
+- 微服务 每组服务包含2台机器
+
+### Notes
+- micro自带一套Web monitor，后续可以扩展更丰富的功能，初期考虑复杂度和成本，暂时不去部署。
+- 测试环境小程序可否跳过域名验证，直接配置到负载均衡器IP
