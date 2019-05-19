@@ -20,7 +20,7 @@ consul和micro的api gateway 是现成工具无需研发，直接使用。
 ## 部署
 
 ### CI/CD
-研究一把腾讯工蜂
+研究一把gitlab
 
 ### 生产环境
 
